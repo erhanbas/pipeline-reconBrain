@@ -1,0 +1,8 @@
+{
+	"Database":{
+		"SampleUrl": 	"http://ml-ubuntu-test:9671/graphql",
+		"SWCUrl":		"http://ml-ubuntu-test:9651/graphql",
+		"TracingsUrl":	"http://ml-ubuntu-test:9661/graphql"
+	},
+	"ForceHemisphere":  "None"
+}

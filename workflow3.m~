@@ -34,7 +34,6 @@ end
 sprintf('TOTAL TIME: %d secs',round(toc(tr)))
 
 %%
-
 if opt.branch2conn == 1
     if isfield(opt,'querdist')
         querdist = opt.querdist; % masking distance to calculate pair scores
@@ -52,13 +51,42 @@ if opt.branch2conn == 1
     save(fullfile(tempfold,['branchConn',tag]),'branch_pair_distance','branch_pair_dissimilarity','opt')
 elseif  opt.branch2conn == 2
 else
+end
 
+%% apply allen transformation
+allenH5 = '/groups/mousebrainmicro/mousebrainmicro/Software/Matlab/Registration tools/Dependencies/OntologyAtlas.h5';
+transformFile = '/groups/mousebrainmicro/mousebrainmicro/registration/Database/2018-08-01/Transform.2018-08-01.h5';
+[ids,subsallen,vectorField,tFormVecField,allentForm,atlas] = getAllenAtlasIds(params,subs,transformFile,allenH5);
+[subsallen,ids] = subs2allensubs(subs,params,vectorField,tFormVecField,allentForm,atlas);
+
+%% train classifier based on repo
+neuronrepo = load('/groups/mousebrainmicro/home/base/CODE/MATLAB/pipeline/pipeline-reconBrain/temp/wrapJRC/20180801_prob0_lev-6_chunk-111_111_masked-0/neurons-181220.mat')
+feats = featsFromRecons(neurons_repo,atlas)
+% feat set for junctions [allen compartment, D]
+% D(1): Euclidean
+% D(2): theta
+% D(3): PCA
+% D(4): KL
+% D(5 [end]): hit
+% save(fullfile(tempfold,['GT_feats']),'feats')
+%%
+feats_array = cat(1,feats{1:917}); % upto 2018-08-01 sample
+feats_array = feats_array(isfinite(feats_array(:,1)),:);
+compartments = unique(feats_array(:,1))';
+hists = histcounts(feats_array(:,1),compartments);
+
+for icomp = compartments
+    % skip;
+    if icomp==0;continue;end
+    inds_in_compartment = feats_array(:,1)==icomp;
+    feat_subset = feats_array(inds_in_compartment,:)
+       
+    
+    
 end
 %% filter out based on Allen mask and context (edge density or alignment). 
 % Implements a binary classifier to decide if an edge should be kept or
 % deleted as a function of Allen compartment ids, and
-% branch_pair_dissimilarity measures.
-
-
+% branch_pair_dissimilarity 
 
 

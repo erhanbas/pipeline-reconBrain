@@ -3,10 +3,10 @@ function [outputArgs] = reconBrain(configfile)
 
 % $Author: base $	$Date: 2018/12/15 00:47:01 $
 % Copyright: HHMI 2016
-
 if nargin<1
     configfile = './config_files/config_reconBrain_20180801_prob0.cfg';
 end
+%%
 
 addpath(genpath('./common'))
 addpath(genpath('./functions'))
@@ -51,6 +51,36 @@ subs_ori = subs;
 edges_ori = edges;
 weights_ori = weights;
 A_ori = A;
+%% apply allen mask if provided
+% 0: outside
+% 507: olfactory
+% 
+maskids = [0 507 73 81 89 98 108 116 124 129 140 145 153 164]; % outside and ventrical system
+
+% maskids = [56 672 1022 1031]; %ACB/Caudoputamen/Globus pallidus, external segment/Globus pallidus, internal segment
+%maskids = [956 844 882 686 56 1022 1031 1021 1085 719 882 583 182305705 182305709 182305713]
+% gt_swcfolder = '/nrs/mouselight/seggui/swcfiles/GT/2017-09-25_striatum_neurons_temp'
+if ~isempty(maskids)
+    %%
+    transformFile = '/groups/mousebrainmicro/mousebrainmicro/registration/Database/2018-08-01/Transform.2018-08-01.h5';
+
+    [hits_allen_brain] = maskWithAllenAtlas(params,subs,maskids,1);
+    if exist('gt_swcfolder','var')
+        addpath(genpath('./scripts'))
+        [hits_gt,hits_delete,swcout,gtfile] = cropSectionBasedOnGT(params,gt_swcfolder,subs);
+        % keep allen_brain and gt then substract delete
+        keepthese = union(setdiff(hits_allen_brain,hits_delete),hits_gt);
+        figure, myplot3(subs(keepthese,:),'.')
+    else
+        keepthese = hits_allen_brain;
+    end
+    %%
+    subs = subs(keepthese,:);
+    A = A(keepthese,:);
+    A = A(:,keepthese);
+end
+
+
 %%
 subs = subs_ori;
 edges = edges_ori;
@@ -61,37 +91,8 @@ Gin = graph(max(A,A'));
 if 0
     workflow1(Gin,subs,opt)
 end
-
-
-
-%% PREPROCESSING: prune & filter graph
-tr=tic;
-if opt.prune == 1
-    size_pruning_Thr = [100 50];
-    [Gpruned,subspruned] = pruneGraph(Gin,subs,size_pruning_Thr,[]);
-    save(fullfile(tempfold,'Gpruned'),'Gpruned','subspruned')
-elseif opt.prune == 2
-    load(fullfile(tempfold,'Gpruned'),'Gpruned','subspruned')
-else
-end
-
-%% CONVERSION to branch
-G = Gpruned;
-subs = subspruned;
-save(fullfile(tempfold,'G_and_subs.mat'),'G','subs','-v7.3')
-
-if opt.graph2branch == 1
-    % [branches,nodeBrid] = graph2branch(Gfilt,subsfilt);
-    [branches,nodeBrid] = graphfuncs.graph2branch(G,subs);
-    save(fullfile(tempfold,['branchlist',tag]),'branches','nodeBrid')
-elseif opt.graph2branch == 2
-    load(fullfile(tempfold,['branchlist',tag]),'branches','nodeBrid')
-else
-end
-sprintf('TOTAL TIME: %d secs',round(toc(tr)))
-
 %% TODO
-workflow3(G,subs,opt)
+workflow3(Gin,subs,opt)
 %%
 %
 % %
