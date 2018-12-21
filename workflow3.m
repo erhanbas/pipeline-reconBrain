@@ -59,33 +59,47 @@ transformFile = '/groups/mousebrainmicro/mousebrainmicro/registration/Database/2
 [ids,subsallen,vectorField,tFormVecField,allentForm,atlas] = getAllenAtlasIds(params,subs,transformFile,allenH5);
 [subsallen,ids] = subs2allensubs(subs,params,vectorField,tFormVecField,allentForm,atlas);
 
+%% sample feature set
+branch_pair_dissimilarity
+
 %% train classifier based on repo
 neuronrepo = load('/groups/mousebrainmicro/home/base/CODE/MATLAB/pipeline/pipeline-reconBrain/temp/wrapJRC/20180801_prob0_lev-6_chunk-111_111_masked-0/neurons-181220.mat')
-feats = featsFromRecons(neurons_repo,atlas)
+feats = featsFromRecons(neurons_repo,atlas);
+feats_juncs = featsFromRecons(branches,branch_pair_dissimilarity,branch_pair_connectivity,atlas)
+
 % feat set for junctions [allen compartment, D]
 % D(1): Euclidean
 % D(2): theta
 % D(3): PCA
 % D(4): KL
 % D(5 [end]): hit
-% save(fullfile(tempfold,['GT_feats']),'feats')
+% save(fullfile(tempfold,['GT_feats_qd_1']),'feats')
+
 %%
 feats_array = cat(1,feats{1:917}); % upto 2018-08-01 sample
 feats_array = feats_array(isfinite(feats_array(:,1)),:);
 compartments = unique(feats_array(:,1))';
 hists = histcounts(feats_array(:,1),compartments);
 
+%%
 for icomp = compartments
     % skip;
     if icomp==0;continue;end
     inds_in_compartment = feats_array(:,1)==icomp;
-    feat_subset = feats_array(inds_in_compartment,:)
+    feat_subset = feats_array(inds_in_compartment,:);
+    
+    %% 
+    inds_in_sub = ids==icomp;
+    feat_sample = 
     
     %%
     figure(13), 
-    for ii=2:6
-        subplot(5,1,ii-1); histogram(feat_subset(:,ii))
-    end
+    subplot(3,1,1); 
+    histogram(feat_subset(feat_subset(:,3)<10,3))
+    subplot(3,1,2); 
+    histogram(feat_subset(:,4))
+    subplot(3,1,3); 
+    histogram(feat_subset(:,5))
     
     
 end
