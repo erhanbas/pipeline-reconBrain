@@ -1,6 +1,9 @@
 function workflow3(Gin,subs,opt)
 
+addpath(genpath('functions'))
+addpath(genpath('common'))
 tr=tic;
+
 
 %% PREPROCESSING: prune & filter graph
 if opt.prune == 1
@@ -56,15 +59,15 @@ end
 %% apply allen transformation
 allenH5 = '/groups/mousebrainmicro/mousebrainmicro/Software/Matlab/Registration tools/Dependencies/OntologyAtlas.h5';
 transformFile = '/groups/mousebrainmicro/mousebrainmicro/registration/Database/2018-08-01/Transform.2018-08-01.h5';
-[ids,subsallen,vectorField,tFormVecField,allentForm,atlas] = getAllenAtlasIds(params,subs,transformFile,allenH5);
-[subsallen,ids] = subs2allensubs(subs,params,vectorField,tFormVecField,allentForm,atlas);
+[ids,subsallen,vectorField,tFormVecField,allentForm,atlas] = getAllenAtlasIds(opt.params,subs,transformFile,allenH5);
+[subsallen,ids] = subs2allensubs(subs,opt.params,vectorField,tFormVecField,allentForm,atlas);
 
 %% sample feature set
 branch_pair_dissimilarity
 
 %% train classifier based on repo
 neuronrepo = load('/groups/mousebrainmicro/home/base/CODE/MATLAB/pipeline/pipeline-reconBrain/temp/wrapJRC/20180801_prob0_lev-6_chunk-111_111_masked-0/neurons-181220.mat')
-feats = featsFromRecons(neurons_repo,atlas);
+feats = featsFromGTRecons(neuronrepo.neurons,atlas);
 feats_juncs = featsFromRecons(branches,branch_pair_dissimilarity,branch_pair_connectivity,atlas)
 
 % feat set for junctions [allen compartment, D]
